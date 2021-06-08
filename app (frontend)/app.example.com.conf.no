@@ -97,7 +97,7 @@ server {
         allow 10.1.0.0/16;
 	# TEMPORAL ... DELETE ME
 	allow 0.0.0.0/0;  
-        deny all;
+        deny all; 
     }
 
     # Conventional location of the NGINX Plus dashboard
