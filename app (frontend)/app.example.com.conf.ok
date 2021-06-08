@@ -1,0 +1,107 @@
+# api.example.com HTTPS --- Frontend
+
+
+# DEBUG = if valid header X-Client then insert header with 1 or 0
+map $http_x_client $valid_client {
+    client1  1;
+    client2  1;
+    client3  1;
+    default  0;
+}
+
+# DEBUG 
+#map $http_x_client $client_cert {
+#    client1  "/etc/ssl/nginx/client1.crt";
+#    client2  "client2.crt";
+#    client3  "/etc/ssl/nginx/client3.crt";
+#    default  "/etc/ssl/nginx/untrusted.crt";
+#}
+#map $http_x_client $client_key {
+#    client1  "/etc/ssl/nginx/client1.key";
+#    client2  "client2.key";
+#    client3  "/etc/ssl/nginx/client3.key";
+#    default  "/etc/ssl/nginx/untrusted.key";
+#}
+
+server {
+    listen 443 ssl;
+    server_name app.example.com;
+    status_zone app.example.com_https;
+
+    set $test1 "/etc/ssl/nginx/app.example.com.crt";
+    set $test2 "/etc/ssl/nginx/app.example.com.key";
+
+    ssl_certificate             /etc/ssl/nginx/app.example.com.crt;
+    ssl_certificate_key         /etc/ssl/nginx/app.example.com.key;
+    #ssl_certificate             $test1;
+    #ssl_certificate_key         $test2;
+    ssl_protocols               TLSv1.2;
+    ssl_ciphers                 TLS_AES_256_GCM_SHA384:HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers   on;
+
+    #ssl_client_certificate /etc/ssl/nginx/ca.crt;
+    #ssl_verify_client on;
+    #ssl_verify_depth 2;
+
+    error_log /var/log/nginx/error.log debug;
+
+    #app_protect_enable on;
+   
+    set $client_cert "/etc/ssl/nginx/client3.pem";
+    set $client_key "/etc/ssl/nginx/client3.pem";
+
+    location / {
+
+	# ESTOS SON LOS QUE SE DEBEN CAMBIAR DINAMICAMENTE
+        proxy_pass https://api.example.com;
+
+	#proxy_ssl_certificate		/etc/ssl/nginx/untrusted.crt;
+	#proxy_ssl_certificate_key	/etc/ssl/nginx/untrusted.key;
+	proxy_ssl_certificate		/etc/ssl/nginx/client3.pem;
+	proxy_ssl_certificate_key	/etc/ssl/nginx/client3.pem;
+
+	# Does not work:
+	#proxy_ssl_certificate		data:$certificate_pem;
+	#proxy_ssl_certificate_key	data:$certificate_pem;
+	#proxy_ssl_certificate		$client_cert;
+	#proxy_ssl_certificate_key	$client_key;
+
+	#proxy_ssl_trusted_certificate	/etc/ssl/nginx/ca.crt;
+	#proxy_ssl_verify		on;
+	#proxy_ssl_verify_depth		2;
+
+
+	add_header X-debug1 $http_x_client;
+	add_header X-debug2 $valid_client;
+	add_header X-debug3 data:$certificate_pem;
+
+        #add_header X-My-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+
+#upstream backend {
+#    keepalive 16;
+#    zone backend 64k;
+#    server apiserver:443;
+#}
+
+server {
+    listen 9090;
+    access_log off;
+
+    location /api/ {
+        api write=on;
+        allow 127.0.0.1;
+        allow 10.1.0.0/16;
+	# TEMPORAL ... DELETE ME
+	allow 0.0.0.0/0;  
+        deny all;
+    }
+
+    # Conventional location of the NGINX Plus dashboard
+    location = /dashboard.html {
+        root /usr/share/nginx/html;
+    }
+}
