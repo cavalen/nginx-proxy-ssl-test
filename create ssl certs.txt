@@ -50,58 +50,6 @@ Edit nginx.conf:
 
 _____________________________________________
 
-ssl.conf
---------
-
-[ req ]
-default_bits = 4096
-prompt = no
-encrypt_key = no
-default_md = sha256
-distinguished_name = dn
-req_extensions = req_ext
-
-[ dn ]
-CN = api.example.com
-emailAddress = carlos@example.com
-O = Example CO Client1
-OU = IT
-L = COL
-ST = COL
-C = CO
-
-[ req_ext ]
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1   =   app.example.com
-DNS.2   =   proxy
-DNS.3   =   api.example.com
-DNS.4   =   api
-IP.1    =   10.1.10.84
-IP.2    =   10.1.10.7
-
-_____________________________________________
-
-ssl-ca.conf
------------
-
-[ req ]
-default_bits = 4096
-prompt = no
-encrypt_key = no
-default_md = sha256
-distinguished_name = dn
-
-[ dn ]
-CN = ca.example.com
-emailAddress = carlos@example.com
-O = Example CO CertAuth
-OU = IT
-L = COL
-ST = COL
-C = CO
-
 
 Test :
 curl -i -k -L -H "X-client: client3" https://app.example.com/api/f1/drivers (valid)
